@@ -23,6 +23,7 @@ Without targets, the skill proposes candidates: state written from several metho
 
 ## Requirements
 
+- Claude Code: the skill runs .NET and Lean on your machine, and the skeptic agent is a Claude Code component
 - .NET SDK 10.0.1xx or later (the inventory is a file-based app run with `dotnet run`)
 - Lean 4 with `elan` and Lake
 - git; a Git remote and the GitHub CLI if you want the draft pull requests
