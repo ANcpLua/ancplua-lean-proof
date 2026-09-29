@@ -1,60 +1,61 @@
 ---
 name: lean-verify
-description: Formally verify C#/.NET state machines with Lean 4 and turn proof counterexamples into reproduced, fixed bugs. Use when asked to formally verify, prove, or model code in Lean, to hunt race conditions or state bugs with proofs, or to check an existing Lean model against the code.
-argument-hint: "<state machines, types or files to verify>"
+description: Prove C#/.NET state machines correct with Lean 4 and turn every counterexample into a reproduced, fixed bug. Use when asked to model or prove code in Lean, to hunt race conditions or state bugs with proofs, or to compare an existing Lean model with the code.
+argument-hint: "<state machines, types or files>"
 ---
 
-# Lean verification campaign
+# Lean proof campaign
 
 Targets: $ARGUMENTS
-If none are listed, use the ones named in the request. If none are named, propose candidates (state fields written from several methods, retry and backoff loops, shutdown, drain and flush paths, cancellation and approval flows) and start with the riskiest.
+None listed: take those named in the request. None named: propose candidates (state written from several methods, retry and backoff loops, shutdown, drain and flush paths, cancellation and approval flows) and start with the riskiest.
 
-Done when every target has a Lean model anchored to the code, proofs that pass the final audit, every counterexample either reproduced as a failing MSTest test and fixed in a draft PR or reported as spurious, and a report a skeptic can rerun. Lean proves the model; the anchor, the trace replay and the tests are what connect the model to the code, so none of them is optional.
+The campaign is a pipeline. Each step has one input and one output, shown in its heading. Lean proves the model; the anchor, the replayed traces and the tests tie the model to the code. The campaign ends when every target has an anchored model, proofs that pass the audit, every counterexample reproduced and fixed in a draft PR or reported spurious, and a report a skeptic can rerun.
 
-## Tools in this skill
-Tested on .NET SDK 10.0.401 (runtime 10.0.12), TFM `net10.0`, with MSTest.Sdk 4.4.1 on Microsoft.Testing.Platform 2.4.1 (API docs: `view=mstest-net-4.4`), and Lean 4.34.1.
-- `dotnet run ${CLAUDE_SKILL_DIR}/scripts/state-writes.cs -- <project|sln|slnx> <Namespace.Type.member>... [--expect cited.json]`
-  Roslyn inventory of every write site of the given fields or properties, as JSON with stable ids. Exit 0 ok, 3 load or compile errors, 4 symbol not found, 5 zero sites, 6 citations uncited, stale or drifted. Run it from the repo root so the repo's global.json picks the SDK.
-- `${CLAUDE_SKILL_DIR}/scripts/lean_audit.sh <RootModule> [--spec <Namespace>]`
-  From the Lake project root: build, axiom and spec audit, leanchecker replay of every module.
+Tested on .NET SDK 10.0.401 (runtime 10.0.12), TFM `net10.0`, MSTest.Sdk 4.4.1 on Microsoft.Testing.Platform 2.4.1, and Lean 4.34.1.
 
-## 1. Anchor
-- Pick the state (fields, properties) each machine owns and inventory its write sites.
-- Keep a citations file per machine: every site id maps to a model transition or a declared abstraction. `--expect` fails on uncited sites (the model is missing behavior), stale ids, and drifted members (the code changed under a citation). Rerun it after every code change; a failure reopens the model.
-- The inventory is evidence only when it exits 0. Exit 3 means the semantic model saw errors; zero sites means a wrong symbol, not immutable state.
-- Navigate with the C# LSP, but cite the inventory: it is compile-checked and rerunnable.
+## 1. Anchor: code → write sites
+`dotnet run ${CLAUDE_SKILL_DIR}/scripts/state-writes.cs -- <project|sln|slnx> <Namespace.Type.member>... [--expect cited.json]`, from the repo root so its global.json picks the SDK.
+- Pick the fields and properties each machine owns; the script lists every write site as JSON with stable ids.
+- A citations file per machine maps each site id to a model transition or a declared abstraction. `--expect` fails on uncited sites, stale ids and drifted members; rerun it after every code change.
+- Exit 0 is evidence. 3: the code didn't compile. 4: symbol not found. 5: zero sites, which means a wrong symbol. 6: citations out of date.
 
-## 2. Model and specify
-- One model per machine. Theorems and trace replay use the same `step` definitions; otherwise a replay says nothing about what was proved.
-- Claims are closed `Prop` definitions in a `Spec` namespace, written from the contract (docs, protocol, issues), not from the implementation. Proofs are `theorem … : Spec.X`, so a claim can't quietly weaken while it is being proved. Editing a Spec file reopens review.
-- Per claim: a non-vacuity witness (the hypotheses are satisfiable) and a sensitivity check (a deliberately broken model violates the claim).
-- Per model, write down its assumptions, its abstractions, and what it does not prove.
+## 2. Model: write sites → Lean model
+- One model per machine. Theorems and trace replay share one `step` function.
+- Write down the model's assumptions, its abstractions and what it doesn't prove.
 
-## 3. Conform
-- Replay real traces (test runs, local runs, existing telemetry; no test-only production hooks) through the model. A rejected trace means the model or the code is wrong, and that model's proofs are provisional until it is resolved.
-- Proofs transfer to the code only if the model admits every real behavior: citations cover that statically, traces dynamically. Report how many traces each model accepted and how much of the code the trace runs covered; two accepted traces is thin evidence.
+## 3. Specify: contract → claims
+- Claims are closed `Prop` definitions in a `Spec` namespace, written from the contract (docs, protocol, issues), not from the implementation. Proofs are `theorem … : Spec.X`, so no claim weakens while it is proved. Editing a Spec file reopens review.
+- Per claim: a witness that its hypotheses hold, and a deliberately broken model that breaks it.
 
-## 4. Review
-Hand each model to the skeptic subagent with the claims, artifact paths and rerun commands, and without your reasoning. Fixes get the same review. Resolve every BROKEN before reporting.
+## 4. Replay: real runs → accepted or rejected traces
+- Replay real runs (test runs, local runs, telemetry; no test-only hooks in production) through the same `step`.
+- A rejected trace means the model or the code is wrong, and that model's proofs wait until it's resolved.
+- Report traces accepted per model and how much code the runs covered.
 
-## 5. Findings and fixes
-- A counterexample becomes a finding once it reproduces as a failing MSTest test at the owner boundary on the unfixed code, failing for the stated reason. Otherwise report it as spurious: the model over-approximates there.
-- For each finding, say who can hit it today and through which path.
-- One draft PR per fix. Prove the fix: the fixed model satisfies the claim and still matches the fixed code (inventory and traces). A fix that covers only part of the proved variant is incomplete; say so and open the follow-up.
-- New tests in a fix PR either fail on the pre-fix code or carry their own justification.
+## 5. Review: model → skeptic's report
+Hand each model to the skeptic agent with the claims, artifact paths and rerun commands, not your reasoning. Fixes get the same review. Resolve every BROKEN before reporting.
 
-## 6. Detection
-Coverage shows that code ran, not that a test would notice it changing: in a fixture with 100% line and branch coverage, a mutant on a covered line survived every test.
-- Per proved claim, mutate its write sites and guards with Roslyn, one mutant at a time, in a worktree of the committed baseline. Write down the predicted failing test before each run.
-- A run counts when the mutant's assembly hash differs from the baseline built in the same worktree (deterministic builds make this exact) and the expected tests executed (`--minimum-expected-tests`). Verdicts: killed, survived, invalid (doesn't compile, unreached, infrastructure).
-- A survivor needs a test or a written equivalence argument.
-- After restoring, rebuild: the assembly hash must equal the baseline again.
+## 6. Reproduce: counterexample → failing test
+- A counterexample is a finding once it reproduces as a failing MSTest test at the owner boundary on the unfixed code, failing for the stated reason. Otherwise it's spurious: the model over-approximates there.
+- For each finding: who can hit it today, and through which path.
 
-## 7. Simplify
-Proofs license merging duplicated logic into one path; reachability shows what can't be deleted. Simplification PRs leave tests unchanged. Rerun the anchor check, the audit, the traces and the tests.
+## 7. Fix: finding → draft PR
+- One draft PR per fix. The fixed model proves the claim and still matches the fixed code, by anchor and traces.
+- A fix that covers only part of the proved variant is incomplete: say so and open the follow-up.
+- New tests fail on the pre-fix code, or carry their own justification.
 
-## 8. Final audit
-Run `lean_audit.sh`. A passing `lake build` proves little on its own: sorry only warns, native_decide and project axioms are silent, and a kernel bypass through `debug.skipKernelTC` passes both the build and the axiom check; only the leanchecker replay catches it. Never run leanchecker without a module argument, since it then replays the entire search path.
+## 8. Detect: proved claim → killed mutants
+Coverage shows that code ran, not that a test would notice it changing.
+- Mutate each claim's write sites and guards with Roslyn, one mutant at a time, in a worktree of the committed baseline. Predict the failing test first.
+- A run counts when the mutant's assembly hash differs from the baseline built in the same worktree and the expected tests ran (`--minimum-expected-tests`). Outcomes: killed, survived, no run (doesn't compile, unreached, infrastructure).
+- A survivor gets a test or a written equivalence argument. After restoring, the rebuilt assembly hash equals the baseline again.
+
+## 9. Simplify: proofs → merged paths
+Proofs license merging duplicated logic into one path; reachability shows what can't be deleted. Simplification PRs leave tests unchanged. Rerun the anchor, the audit, the traces and the tests.
+
+## 10. Audit: Lake project → pass or fail
+`${CLAUDE_SKILL_DIR}/scripts/lean_audit.sh <RootModule> [--spec <Namespace>]` from the Lake project root: build, axiom and spec audit, then a leanchecker kernel replay of every module.
+A green `lake build` alone proves little: `sorry` only warns, `native_decide` and project axioms are silent, and a kernel bypass through `debug.skipKernelTC` passes both the build and the axiom check. Only the kernel replay catches it. Run leanchecker only with a module argument; without one it replays the entire search path.
 
 ## Report
-Held-up claims, findings with PRs, spurious counterexamples, provisional models, non-goals. Counts in defined units: PRs by type, bugs by source (proofs, review, gaps in your own fixes), non-test and test LOC ±, test cases ±, theorems, traces accepted, mutants killed and survived. Include the rerun commands. Publish or merge only when the owner says so.
+Claims that held, findings with PRs, spurious counterexamples, provisional models, non-goals. Counts in defined units: PRs by type, bugs by source (proofs, review, gaps in your own fixes), non-test and test lines ±, test cases ±, theorems, traces accepted, mutants killed and survived. Include the rerun commands. Publish or merge only when the owner says so.

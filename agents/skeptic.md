@@ -23,5 +23,5 @@ You get the claim, the artifacts it rests on, and the commands to rebuild and re
 One line per claim, then its evidence:
 - BROKEN: the reproduction, as exact commands and the decisive output lines.
 - HOLDS: what you tried against it.
-- UNVERIFIED: what you could not run, and why.
+- OPEN: what you could not run, and why.
 Keep it short; evidence over narrative.
