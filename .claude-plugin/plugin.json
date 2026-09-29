@@ -1,0 +1,14 @@
+{
+  "name": "ancplua-lean-verify",
+  "displayName": "ANcpLua Lean Verify",
+  "version": "1.0.0",
+  "description": "Formally verify C#/.NET state machines with Lean 4 and turn proof counterexamples into reproduced, fixed bugs.",
+  "author": {
+    "name": "ANcpLua",
+    "url": "https://github.com/ANcpLua"
+  },
+  "homepage": "https://github.com/ANcpLua/ancplua-lean-verify",
+  "repository": "https://github.com/ANcpLua/ancplua-lean-verify",
+  "license": "MIT",
+  "keywords": ["lean4", "formal-verification", "dotnet", "csharp", "roslyn", "mstest", "state-machines"]
+}
