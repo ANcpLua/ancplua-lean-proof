@@ -1,0 +1,15 @@
+{
+  "name": "ancplua-lean-verify",
+  "owner": {
+    "name": "ANcpLua",
+    "url": "https://github.com/ANcpLua"
+  },
+  "description": "Prove C#/.NET state machines correct with Lean 4.",
+  "plugins": [
+    {
+      "name": "ancplua-lean-verify",
+      "source": ".",
+      "category": "development"
+    }
+  ]
+}

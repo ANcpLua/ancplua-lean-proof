@@ -21,6 +21,15 @@ Each step has one input and one output.
 | Simplify | proofs → merged code paths |
 | Audit | Lean project → pass or fail |
 
+## Install
+
+The repository is its own marketplace:
+
+```
+/plugin marketplace add ANcpLua/ancplua-lean-verify
+/plugin install ancplua-lean-verify@ancplua-lean-verify
+```
+
 ## Use
 
 Ask Claude to prove a state machine, or name the types or files:
