@@ -1,14 +1,14 @@
 {
-  "name": "ancplua-lean-verify",
-  "displayName": "ANcpLua Lean Verify",
-  "version": "1.0.1",
+  "name": "ancplua-lean-proof",
+  "displayName": "ANcpLua Lean Proof",
+  "version": "1.1.0",
   "description": "Prove C#/.NET state machines correct with Lean 4 and turn every counterexample into a reproduced, fixed bug.",
   "author": {
     "name": "ANcpLua",
     "url": "https://github.com/ANcpLua"
   },
-  "homepage": "https://github.com/ANcpLua/ancplua-lean-verify",
-  "repository": "https://github.com/ANcpLua/ancplua-lean-verify",
+  "homepage": "https://github.com/ANcpLua/ancplua-lean-proof",
+  "repository": "https://github.com/ANcpLua/ancplua-lean-proof",
   "license": "MIT",
   "keywords": ["lean4", "formal-methods", "dotnet", "csharp", "roslyn", "mstest", "state-machines"]
 }

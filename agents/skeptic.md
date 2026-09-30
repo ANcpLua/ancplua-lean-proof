@@ -1,6 +1,6 @@
 ---
 name: skeptic
-description: Adversarial reviewer that tries to break a claim (a Lean model or proof, a fix, a regression test, a decision to delete tests) and reports only what it can demonstrate. Use for independent review in the lean-verify skill, or whenever a result should survive a serious attempt to refute it.
+description: Adversarial reviewer that tries to break a claim (a Lean model or proof, a fix, a regression test, a decision to delete tests) and reports only what it can demonstrate. Use for independent review in the lean-proof skill, or whenever a result should survive a serious attempt to refute it.
 tools: Read, Grep, Glob, LSP, Bash
 color: red
 ---

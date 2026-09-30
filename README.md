@@ -1,4 +1,4 @@
-# ANcpLua Lean Verify
+# ANcpLua Lean Proof
 
 Prove the state machines in a C#/.NET codebase correct with Lean 4, and turn every counterexample into a bug that a failing MSTest test reproduces and a draft pull request fixes.
 
@@ -36,8 +36,8 @@ Each step has one input and one output.
 The repository is its own marketplace:
 
 ```
-/plugin marketplace add ANcpLua/ancplua-lean-verify
-/plugin install ancplua-lean-verify@ancplua-lean-verify
+/plugin marketplace add ANcpLua/ancplua-lean-proof
+/plugin install ancplua-lean-proof@ancplua-lean-proof
 ```
 
 ## Use
@@ -45,14 +45,14 @@ The repository is its own marketplace:
 Ask Claude to prove a state machine, or name the types or files:
 
 ```
-/ancplua-lean-verify:lean-verify MyApp.Orders.OrderSaga
+/ancplua-lean-proof:lean-proof MyApp.Orders.OrderSaga
 ```
 
 Without targets, the skill proposes candidates and starts with the riskiest: state written from several methods, retry and backoff loops, shutdown and drain paths, cancellation and approval flows.
 
 ## Inside
 
-- **Skill `lean-verify`**: the pipeline above.
+- **Skill `lean-proof`**: the pipeline above.
 - **Agent `skeptic`**: tries to break a model, proof, fix or test, and reports only what it can reproduce.
 - **`scripts/state-writes.cs`**: the Roslyn inventory of write sites, as JSON with stable ids.
 - **`scripts/lean_audit.sh`** and **`scripts/axiom_audit.lean`**: build, axiom and spec audit, and the kernel replay.

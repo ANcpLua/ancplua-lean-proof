@@ -1,5 +1,5 @@
 ---
-name: lean-verify
+name: lean-proof
 description: Prove C#/.NET state machines correct with Lean 4 and turn every counterexample into a reproduced, fixed bug. Use when asked to model or prove code in Lean, to hunt race conditions or state bugs with proofs, or to compare an existing Lean model with the code.
 argument-hint: "<state machines, types or files>"
 ---
