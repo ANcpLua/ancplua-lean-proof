@@ -73,6 +73,8 @@ Tested on .NET SDK 10.0.401 (runtime 10.0.12), MSTest.Sdk 4.4.1 on Microsoft.Tes
 - The skill has Claude build and test your code, create git worktrees for mutants and pre-fix runs, and open draft pull requests on your repository's remote. It publishes or merges a pull request only when you say so.
 - The plugin has no hooks, no MCP servers and no telemetry, and sends no data anywhere on its own.
 
+The full [privacy policy](PRIVACY.md) says the same in one place.
+
 ## License
 
 MIT, see [LICENSE](LICENSE).
