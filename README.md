@@ -4,6 +4,16 @@ Prove the state machines in a C#/.NET codebase correct with Lean 4, and turn eve
 
 Lean proves the model. The plugin ties the model to the code: Roslyn lists every write site of the modelled state and cites it to a model transition, real runs replay through the model, an independent skeptic agent reviews each model, and a final audit rebuilds the proofs, checks their axioms and replays every module through the Lean kernel.
 
+## Where it comes from
+
+The plugin follows the workflow Boris Cherny showed in September 2026. From a one-line prompt, Opus 5.5 modelled the Claude Agent SDK's state machines in Lean, and the run became 16 pull requests fixing 24 bugs. Five things made that run work, and each one is a step here:
+
+- **Proofs end in pull requests.** Each bug gets a test that fails before the fix and passes after it (Reproduce, Fix).
+- **Every bug is real.** A counterexample becomes a finding only after it reproduces on the real code (Reproduce).
+- **The run is honest about itself.** A model that disagrees with real runs stays provisional, and a fix that covers only part of a problem gets a follow-up (Replay, Fix).
+- **The proofs work twice.** They find bugs, then show which duplicated code can merge safely (Simplify).
+- **You stay in charge.** Nothing is published or merged until you say so.
+
 ## The pipeline
 
 Each step has one input and one output.
