@@ -4,7 +4,7 @@
     "name": "ANcpLua",
     "url": "https://github.com/ANcpLua"
   },
-  "description": "Prove C#/.NET state machines correct with Lean 4.",
+  "description": "Prove C#/.NET state machines correct with Lean 4, in Claude Code.",
   "plugins": [
     {
       "name": "ancplua-lean-proof",

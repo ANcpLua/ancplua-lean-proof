@@ -2,7 +2,7 @@
   "name": "ancplua-lean-proof",
   "displayName": "ANcpLua Lean Proof",
   "version": "1.1.1",
-  "description": "Prove C#/.NET state machines correct with Lean 4 and turn every counterexample into a reproduced, fixed bug.",
+  "description": "Prove C#/.NET state machines correct with Lean 4 and turn every counterexample into a reproduced, fixed bug. Runs in Claude Code.",
   "author": {
     "name": "ANcpLua",
     "url": "https://github.com/ANcpLua"

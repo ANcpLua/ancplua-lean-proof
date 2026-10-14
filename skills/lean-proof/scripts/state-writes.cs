@@ -92,23 +92,23 @@ foreach (var sym in symbols)
 }
 
 // Stable ids: member doc-id | symbol | kind | ordinal within member (line numbers are for humans only).
-var ordered = sites.OrderBy(s => s.file, StringComparer.Ordinal).ThenBy(s => s.line).ThenBy(s => s.column).ToList();
+var ordered = sites.OrderBy(s => s.File, StringComparer.Ordinal).ThenBy(s => s.Line).ThenBy(s => s.Column).ToList();
 var withIds = ordered
-    .GroupBy(s => (s.member, s.symbol, s.kind))
-    .SelectMany(g => g.Select((s, i) => s with { id = $"{s.member}|{s.symbol}|{s.kind}|{i + 1}" }))
-    .OrderBy(s => s.file, StringComparer.Ordinal).ThenBy(s => s.line).ThenBy(s => s.column).ToList();
+    .GroupBy(s => (s.Member, s.Symbol, s.Kind))
+    .SelectMany(g => g.Select((s, i) => s with { Id = $"{s.Member}|{s.Symbol}|{s.Kind}|{i + 1}" }))
+    .OrderBy(s => s.File, StringComparer.Ordinal).ThenBy(s => s.Line).ThenBy(s => s.Column).ToList();
 
-var json = new JsonSerializerOptions { WriteIndented = true };
+var json = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 Console.WriteLine(JsonSerializer.Serialize(new { target = Path.GetFileName(target), symbols = symbols.Select(s => s.ToDisplayString()), count = withIds.Count, sites = withIds }, json));
 if (withIds.Count == 0) { Console.Error.WriteLine("Zero write sites found: not evidence of immutability; check symbol names and project scope."); return 5; }
 
 if (expectPath is not null)
 {
     var cited = JsonSerializer.Deserialize<List<Cited>>(File.ReadAllText(expectPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
-    var byId = withIds.ToDictionary(s => s.id);
-    var uncited = withIds.Where(s => !cited.Any(c => c.Id == s.id)).Select(s => s.id).ToList();
+    var byId = withIds.ToDictionary(s => s.Id);
+    var uncited = withIds.Where(s => cited.All(c => c.Id != s.Id)).Select(s => s.Id).ToList();
     var stale = cited.Where(c => !byId.ContainsKey(c.Id)).Select(c => c.Id).ToList();
-    var drifted = cited.Where(c => byId.TryGetValue(c.Id, out var s) && c.MemberHash is not null && c.MemberHash != s.memberHash).Select(c => c.Id).ToList();
+    var drifted = cited.Where(c => byId.TryGetValue(c.Id, out var s) && c.MemberHash is not null && c.MemberHash != s.MemberHash).Select(c => c.Id).ToList();
     foreach (var (label, list) in new[] { ("UNCITED", uncited), ("STALE", stale), ("DRIFTED", drifted) })
         foreach (var id in list) Console.Error.WriteLine($"{label} {id}");
     if (uncited.Count + stale.Count + drifted.Count > 0) return 6;
@@ -129,11 +129,13 @@ static string? Classify(IOperation reference)
         IArgumentOperation { Parameter.RefKind: RefKind.Ref } arg => $"ref-arg:{Callee(arg)}",
         IVariableInitializerOperation when reference.Syntax.Parent is RefExpressionSyntax => "ref-alias",
         IReturnOperation when reference.Syntax.Parent is RefExpressionSyntax => "ref-return",
-        ITupleOperation t when t.Parent is IDeconstructionAssignmentOperation d && IsWithin(d.Target, reference) => "deconstruct",
+        ITupleOperation t when DeconstructionOf(t) is { } d && IsWithin(d.Target, reference) => "deconstruct",
         _ => reference.Parent is IAddressOfOperation ? "address-of" : null
     };
 }
 static bool IsWithin(IOperation root, IOperation op) { for (var o = op; o is not null; o = o.Parent) if (o == root) return true; return false; }
+// Nested targets such as ((a, State), b) = ... sit in tuples inside the deconstruction's target tuple.
+static IDeconstructionAssignmentOperation? DeconstructionOf(ITupleOperation tuple) { IOperation? o = tuple.Parent; while (o is ITupleOperation) o = o.Parent; return o as IDeconstructionAssignmentOperation; }
 static string Callee(IArgumentOperation arg) => arg.Parent is IInvocationOperation inv ? $"{inv.TargetMethod.ContainingType.Name}.{inv.TargetMethod.Name}" : "?";
 
 Site MakeSite(string symbol, string kind, SyntaxNode node, ISymbol? declared)
@@ -154,5 +156,5 @@ Site MakeSite(string symbol, string kind, SyntaxNode node, ISymbol? declared)
 
 static int Usage() { Console.Error.WriteLine("usage: dotnet run state-writes.cs -- <project|solution> <Namespace.Type.member>... [--expect cited.json]"); return 2; }
 
-record Site(string id, string symbol, string kind, string file, int line, int column, string member, string memberHash, string text);
+record Site(string Id, string Symbol, string Kind, string File, int Line, int Column, string Member, string MemberHash, string Text);
 record Cited(string Id, string? MemberHash);
