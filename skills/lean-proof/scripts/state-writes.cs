@@ -12,6 +12,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -98,13 +99,13 @@ var withIds = ordered
     .SelectMany(g => g.Select((s, i) => s with { Id = $"{s.Member}|{s.Symbol}|{s.Kind}|{i + 1}" }))
     .OrderBy(s => s.File, StringComparer.Ordinal).ThenBy(s => s.Line).ThenBy(s => s.Column).ToList();
 
-var json = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-Console.WriteLine(JsonSerializer.Serialize(new { target = Path.GetFileName(target), symbols = symbols.Select(s => s.ToDisplayString()), count = withIds.Count, sites = withIds }, json));
+var inventory = new Inventory(Path.GetFileName(target), symbols.Select(s => s.ToDisplayString()).ToList(), withIds.Count, withIds);
+Console.WriteLine(JsonSerializer.Serialize(inventory, InventoryJson.Default.Inventory));
 if (withIds.Count == 0) { Console.Error.WriteLine("Zero write sites found: not evidence of immutability; check symbol names and project scope."); return 5; }
 
 if (expectPath is not null)
 {
-    var cited = JsonSerializer.Deserialize<List<Cited>>(File.ReadAllText(expectPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+    var cited = JsonSerializer.Deserialize(File.ReadAllText(expectPath), InventoryJson.Default.ListCited) ?? [];
     var byId = withIds.ToDictionary(s => s.Id);
     var uncited = withIds.Where(s => cited.All(c => c.Id != s.Id)).Select(s => s.Id).ToList();
     var stale = cited.Where(c => !byId.ContainsKey(c.Id)).Select(c => c.Id).ToList();
@@ -156,5 +157,12 @@ Site MakeSite(string symbol, string kind, SyntaxNode node, ISymbol? declared)
 
 static int Usage() { Console.Error.WriteLine("usage: dotnet run state-writes.cs -- <project|solution> <Namespace.Type.member>... [--expect cited.json]"); return 2; }
 
+record Inventory(string Target, List<string> Symbols, int Count, List<Site> Sites);
 record Site(string Id, string Symbol, string Kind, string File, int Line, int Column, string Member, string MemberHash, string Text);
 record Cited(string Id, string? MemberHash);
+
+// Source-generated, so the inventory is serialized by compiled code rather than reflection.
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(Inventory))]
+[JsonSerializable(typeof(List<Cited>))]
+partial class InventoryJson : JsonSerializerContext;
