@@ -57,6 +57,7 @@ Without targets, the skill proposes candidates and starts with the riskiest: sta
 - **`scripts/state-writes.cs`**: the Roslyn inventory of write sites, as JSON with stable ids.
 - **`scripts/lean_audit.sh`** and **`scripts/axiom_audit.lean`**: build, axiom and spec audit, and the kernel replay.
 - **`evals/`**: a `claude plugin eval` suite that checks when the skill starts on its own: twelve requests it should start for and twelve just outside its scope. `evals/FINDINGS.md` has the latest measurement.
+- **`docs/experiments/`**: experiments that are planned but not yet run, each with its question, method and decision rule.
 
 ## Requirements
 
